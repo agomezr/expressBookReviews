@@ -4,8 +4,8 @@ const session = require('express-session')
 const customer_routes = require('./router/auth_users.js').authenticated;
 const genl_routes = require('./router/general.js').general;
 
-const SECRET_KEY = "Secret-Key";
-const PORT =5000;
+const SECRET_KEY = require('./router/auth_users.js').SECRET_KEY;;
+const PORT = 5000;
 
 const app = express();
 
