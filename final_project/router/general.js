@@ -26,7 +26,6 @@ public_users.get('/',function (req, res) {
 public_users.post("/register", (req,res) => {
   const username = req.body.username;
   const password = req.body.password;
-  return res.send('el usuario es '+ username + " /" + password);
 
   // Check if both username and password are provided
   if (username && password) {
