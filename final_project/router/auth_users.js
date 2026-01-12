@@ -10,21 +10,12 @@ let users = [
   {"username": "luis", "password": "54321"},
 ];
 
-const isValid = (username)=>{ //returns boolean
-//write code to check is the username is valid
+const isValid = (username)=>{ 
+ return users.some((user) => user.username === username);
 }
 
 // Check if the user with the given username and password exists
 const authenticatedUser = (username,password)=>{ 
-    // let validusers = users.filter((user) => {
-    //     return (user.username === username && user.password === password);
-    // });
-    // // Return true if any valid user is found, otherwise false
-    // if (validusers.length > 0) {
-    //     return true;
-    // } else {
-    //     return false;
-    // }
     return users.some((user) => user.username === username && user.password === password);
 }
 
@@ -62,7 +53,7 @@ regd_users.post("/login", (req,res) => {
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
   const isbnQuery = req.params.isbn;
-  const username = req.user;
+  const username = req.session.authorization.username;
   const review = req.body.review;
 
   if (!books[isbnQuery]){
