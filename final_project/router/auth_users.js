@@ -60,6 +60,10 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
     return res.status(404).json({message: "Book not found"});
   }
 
+  if (!review){
+    return res.status(404).json({message: "Review cannot be empty"});
+  }
+
   let message = "Review posted successfully";
 
   if (books[isbnQuery].reviews[username]){
@@ -68,14 +72,13 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
 
   books[isbnQuery].reviews[username] = review;
 
-  return res.status(200).send(message); 
+  return res.status(200).send(message + ": " + review); 
 });
 
 // Delete a review
 regd_users.delete("/auth/review/:isbn", (req, res) => {
   const isbnQuery = req.params.isbn;
   const username = req.session.authorization.username;
-  const review = req.body.review;
 
   if (!books[isbnQuery]){
     return res.status(404).json({message: "Book not found"});
@@ -85,9 +88,10 @@ regd_users.delete("/auth/review/:isbn", (req, res) => {
     return res.status(404).json({message: "Review not found"});
   }
 
+  const review = books[isbnQuery].reviews[username];
   delete(books[isbnQuery].reviews[username]);
 
-  return res.status(200).send("Review deleted successfully"); 
+  return res.status(200).send(`Review deleted successfully: ${review}`); 
 });
 
 module.exports.authenticated = regd_users;
