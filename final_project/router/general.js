@@ -5,6 +5,16 @@ let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
 
+const allBooksCallback = (callback) => {
+  setTimeout(() => {
+    if (books) {
+      callback(null, books);
+    } else {
+      callback(new Error("No books found."));
+    }
+  }, 500);
+};
+
 // Check if a user with the given username already exists
 const doesExist = (username) => {
     // Filter the users array for any user with the same username
@@ -21,11 +31,13 @@ const doesExist = (username) => {
 
 // Get the book list available in the shop
 public_users.get('/',async function (req, res) {
-  try {
-    return res.send(books);
-  } catch (error) {
-    res.status(500).json({ message: "Error retrieving all books" });
-  }
+  allBooksCallback((err, allBooks) => {
+    if (err) {
+      return res.status(500).json({ message: err.message });
+    }
+    return res.status(200).json(allBooks);
+  });
+
 });
 
 public_users.post("/register", (req,res) => {
@@ -49,44 +61,44 @@ public_users.post("/register", (req,res) => {
 });
 
 // Get book details based on ISBN
-public_users.get('/isbn/:isbn',async function (req, res) {
+public_users.get('/isbn/:isbn', function (req, res) {
   const isbn = req.params.isbn;
-  
-  try {
-    const response = await axios.get("http://localhost:5000/"); 
-    const allBooks = response.data;
-    
-    if (!allBooks[isbn]){
-      return res.status(404).json({message: "Book not found"});
-    }
 
-    return res.send(allBooks[isbn]);
-  } catch (error) {
-    res.status(500).json({ message: "Error retrieving books by ISBN" });
-  }
+  axios.get("http://localhost:5000/")
+    .then((response) => {
 
- });
+      const allBooks = response.data;
+      if (allBooks && allBooks[isbn]) {
+        return res.status(200).json(allBooks[isbn]);
+      }
+      return res.status(404).json({ message: "Book not found" });
+      
+    })
+    .catch((error) => {
+      res.status(500).json({ message: "Error retrieving books by ISBN", error: error.message });
+    });
+});
   
 // Get book details based on author
-public_users.get('/author/:author',async function (req, res) {
+public_users.get('/author/:author', function (req, res) {
   const authorQuery = req.params.author.toLowerCase();
 
-  try {
-    const response = await axios.get("http://localhost:5000/"); 
-    const allBooks = response.data;
+   axios.get("http://localhost:5000/")
+    .then((response) => {
 
-    const filteredBooks = Object.values(allBooks).filter((book)=> {
-      return book.author.toLowerCase().includes(authorQuery);
-    });
+      const allBooks = response.data;
+      const filteredBooks = Object.values(allBooks).filter((book)=> {
+        return book.author && book.author.toLowerCase().includes(authorQuery);
+      });
 
-    if (filteredBooks.length > 0){
-      return res.send(filteredBooks);
-    } else {
+      if (filteredBooks.length > 0) {
+        return res.send(filteredBooks);
+      }
       return res.status(404).json({message: "No books found for this author"});
-    }
-  } catch (error) {
-    res.status(500).json({ message: "Error retrieving books by author" });
-  }
+
+    }).catch((error) => {
+      res.status(500).json({ message: "Error retrieving books by author" });
+    })
 });
 
 // Get all books based on title
@@ -102,7 +114,7 @@ public_users.get('/title/:title',async function (req, res) {
     });
 
     if (filteredBooks.length > 0){
-      return res.send(JSON.stringify(filteredBooks,null,4));
+      return res.status(200).json(filteredBooks);
     }
 
     return res.status(404).json({message: "No books found for this title"});
@@ -122,8 +134,8 @@ public_users.get('/review/:isbn',async function (req, res) {
     if (!allBooks[isbn]){
       return res.status(404).json({message: "Book not found"});
     }
-
-    return res.send(JSON.stringify(allBooks[isbn].reviews,null,4));
+    return res.status(200).json(allBooks[isbn].reviews || {});
+    
   } catch (error) {
     res.status(500).json({ message: "Error retrieving books by review" });
   }
